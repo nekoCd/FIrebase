@@ -28,7 +28,6 @@ async function cleanupExpiredAdmins() {
   snapshot.forEach((doc) => {
     const data = doc.data();
     if (data.adminExpiresAt && new Date(data.adminExpiresAt.toDate()) <= now) {
-      // Expired
       batch.update(doc.ref, { isAdmin: false, adminExpiresAt: null });
     }
   });
@@ -102,14 +101,30 @@ app.post("/banUser", async (req, res) => {
   }
 });
 
-// === NEW: List all admins ===
+// === NEW: List all admins (permanent/temporary) ===
 app.get("/listAdmins", async (req, res) => {
   try {
     const snapshot = await db.collection("users").where("isAdmin", "==", true).get();
     const admins = [];
 
     snapshot.forEach((doc) => {
-      admins.push({ uid: doc.id, ...doc.data() });
+      const data = doc.data();
+      let type = "permanent";
+      let expiresAt = null;
+
+      if (data.adminExpiresAt) {
+        const expDate = data.adminExpiresAt.toDate();
+        if (expDate > new Date()) {
+          type = "temporary";
+          expiresAt = expDate;
+        }
+      }
+
+      admins.push({
+        uid: doc.id,
+        type,
+        expiresAt,
+      });
     });
 
     res.json({ success: true, admins });
