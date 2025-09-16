@@ -88,3 +88,34 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Admin login
+app.post("/adminLogin", (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ success: false, message: "Missing username or password" });
+  }
+
+  const stmt = db.prepare("SELECT * FROM users WHERE username = ? AND is_admin = 1");
+  const admin = stmt.get(username);
+
+  if (!admin) {
+    return res.status(401).json({ success: false, message: "Admin not found" });
+  }
+
+  if (admin.password_hash !== password) {
+    return res.status(401).json({ success: false, message: "Invalid password" });
+  }
+
+  res.json({ success: true, message: "Admin login successful", uid: admin.uid });
+});
+
+// List all users
+app.get("/listUsers", (req, res) => {
+  try {
+    const users = db.prepare("SELECT uid, email, banned, is_admin, admin_until FROM users").all();
+    res.json({ success: true, users });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});

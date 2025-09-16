@@ -1,8 +1,11 @@
-INSERT OR IGNORE INTO users (uid, email, banned, is_admin, admin_until)
+-- Default permanent admin
+INSERT OR IGNORE INTO users (uid, email, banned, is_admin, admin_until, username, password_hash)
 VALUES (
-  'testUID123',
+  'adminUID001',
   'admin@example.com',
   0,
   1,
-  NULL
+  NULL,
+  'NekoLoggerAdmin',
+  '1e+2901e+290'
 );
