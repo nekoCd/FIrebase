@@ -138,3 +138,32 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
+// Auto-create user doc on login
+app.post("/createUserDoc", async (req, res) => {
+  const { uid, email } = req.body;
+
+  if (!uid) {
+    return res.status(400).json({ success: false, message: "Missing uid" });
+  }
+
+  try {
+    const userRef = db.collection("users").doc(uid);
+    const snap = await userRef.get();
+
+    if (!snap.exists) {
+      await userRef.set({
+        email: email || null,
+        banned: false,
+        isAdmin: false,
+        adminExpiresAt: null,
+        createdAt: new Date(),
+      });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
